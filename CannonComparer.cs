@@ -58,46 +58,14 @@ namespace CramTetrisCalcUI
             writer.WriteLine($"Prime connector{CD}x{CD}y{CD}z");
             writer.WriteLine($"{CD}{PrimeConnectorCoordinates.X}{CD}{PrimeConnectorCoordinates.Y}{CD}{PrimeConnectorCoordinates.Z}");
 
-            writer.WriteLine("Legend");
-            writer.WriteLine($"{CD}P{CD}C");
-            writer.WriteLine($"{CD}Pellet{CD}Connector");
-            writer.WriteLine("Packers are labeled with letters indicating the orientation of their pellet-connecting faces");
-            writer.WriteLine($"{CD}N{CD}S{CD}E{CD}W{CD}U{CD}D");
-            writer.WriteLine($"{CD}North{CD}South{CD}East{CD}West{CD}Up{CD}Down");
-
             Cannon[] topCannonArr = { TopCannonPerBlockVolume, TopCannonPerBoundingBox };
             foreach (Cannon topCannon in topCannonArr)
             {
-                writer.WriteLine(topCannon.Name);
-                foreach (string stringToWrite in topCannon.GenerateLayerStrings(CD))
+                string[] stringsToWrite = topCannon.GenerateStatStringArray(CD);
+                for (int i = 0; i < stringsToWrite.Length; i++)
                 {
-                    writer.WriteLine(stringToWrite);
+                    writer.WriteLine(stringsToWrite[i]);
                 }
-
-                topCannon.CountComponentTypes();
-                string componentCountHeader = $"{CD}";
-                foreach (CramComponentType type in topCannon.ComponentCounts.Keys)
-                {
-                    componentCountHeader += type.ToString() + ColumnDelimiter;
-                }
-                writer.WriteLine(componentCountHeader);
-                string componentCountValues = $"{CD}";
-                foreach (CramComponentType type in topCannon.ComponentCounts.Keys)
-                {
-                    componentCountValues += topCannon.ComponentCounts[type].ToString() + ColumnDelimiter;
-
-                }
-                writer.WriteLine(componentCountValues);
-
-                writer.WriteLine($"Total pellet connections {CD}{topCannon.TotalPelletConnections}");
-                writer.WriteLine($"Occupied blocks {CD}{topCannon.BlockVolume}");
-                writer.WriteLine($"Connections per block volume {CD}{topCannon.ConnectionsPerBlockVolume}");
-                writer.WriteLine($"Bounding volume {CD}{topCannon.BoundingBoxVolume}");
-                writer.WriteLine($"Connections per bounding {CD}{topCannon.ConnectionsPerBoundingBox}");
-
-                // Spacer between cannons
-                writer.WriteLine("");
-                writer.WriteLine("");
             }
         }
 

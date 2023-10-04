@@ -14,7 +14,7 @@ namespace CramTetrisCalcUI
         /// <summary>
         /// Stores component information and runs tests for Tetris effectiveness
         /// </summary>
-        /// <param name="componentSet">List of ComponentSlot objects with pre-set coordinates, type, and orientation</param>
+        /// <param name="componentArray">Array of ComponentSlot objects with pre-set coordinates, type, and orientation</param>
         /// <param name="primeConnectorCoordinates">x, y, z coordinates of fixed Prime Connector, to which all others must 
         /// connected</param>
         /// <param name="layerCount">Number of CRAM Tetris layers</param>
@@ -76,6 +76,8 @@ namespace CramTetrisCalcUI
             {
                 slotToReset.IsConnected = false;
             }
+            // Prime connector is always connected
+            GetSlotAtCoordinates(PrimeConnectorCoordinates).IsConnected = true;
 
             // Check whether all connectors are connected to Prime Connector through other connectors
             while (coordsToCheckList.Count > 0)
@@ -122,6 +124,7 @@ namespace CramTetrisCalcUI
 
             // Check all packers and connectors are conected to Prime Connector
             // And all pellets have at least one packer connection
+            CalculatePackerToPelletConnections();
             foreach (ComponentSlot slot in ComponentArray)
             {
                 if ((slot.ComponentType == CramComponentType.Connector
@@ -144,7 +147,7 @@ namespace CramTetrisCalcUI
         /// <summary>
         /// Check slots adjacent to packers for connected pellets
         /// </summary>
-        public void CalculatePackerToPelletConnections()
+        private void CalculatePackerToPelletConnections()
         {
             // Reset packer connection counts
             foreach (ComponentSlot slotToReset in ComponentArray)
@@ -303,7 +306,7 @@ namespace CramTetrisCalcUI
                             }
                             else if (slot.ComponentType == CramComponentType.Packer)
                             {
-                                zString += slot.Orientation.ToString() + cd;
+                                zString += slot.Orientation.Name + cd;
                             }
                             else
                             {
@@ -314,6 +317,51 @@ namespace CramTetrisCalcUI
                     yield return zString;
                 }
             }
+        }
+
+        /// <summary>
+        /// Generate comma-separated cannon stats array
+        /// For printing to file or console
+        /// </summary>
+        /// <param name="cd">Column delimiter; either ',' or ';' depending on regional settings</param>
+        /// <returns></returns>
+        public string[] GenerateStatStringArray(char cd)
+        {
+            List<string> strings = new()
+            {
+                Name
+            };
+            foreach (string stringToWrite in GenerateLayerStrings(cd))
+            {
+                strings.Add(stringToWrite);
+            }
+
+            CountComponentTypes();
+            string componentCountHeader = $"{cd}";
+            foreach (CramComponentType type in ComponentCounts.Keys)
+            {
+                componentCountHeader += type.ToString() + cd;
+            }
+            strings.Add(componentCountHeader);
+            string componentCountValues = $"{cd}";
+            foreach (CramComponentType type in ComponentCounts.Keys)
+            {
+                componentCountValues += ComponentCounts[type].ToString() + cd;
+
+            }
+            strings.Add(componentCountValues);
+
+            strings.Add($"Total pellet connections{cd}{TotalPelletConnections}");
+            strings.Add($"Occupied blocks{cd}{BlockVolume}");
+            strings.Add($"Connections per block volume{cd}{ConnectionsPerBlockVolume}");
+            strings.Add($"Bounding volume{cd}{BoundingBoxVolume}");
+            strings.Add($"Connections per bounding{cd}{ConnectionsPerBoundingBox}");
+
+            // Spacer between cannons
+            strings.Add("");
+            strings.Add("");
+
+            return strings.ToArray();
         }
     }
 }

@@ -49,7 +49,6 @@ namespace CramTetrisCalcUI
                 Cannon cannonToTest = new(currentSlotArray, _primeConnectorCoordinates, _layerCount, _sideLength);
                 if (cannonToTest.CheckConnections())
                 {
-                    cannonToTest.CalculatePackerToPelletConnections();
                     cannonToTest.CalculateConnectionsPerVolume();
                     Cannons.Add(cannonToTest);
                     ValidCannons++;
