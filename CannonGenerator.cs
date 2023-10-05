@@ -9,17 +9,17 @@ namespace CramTetrisCalcUI
     {
         public CannonGenerator(ComponentSlot[,,] originalSlots, Coordinates primeConnectorCoordinates, int layerCount, int sideLength)
         {
-            _originalSlots = originalSlots;
-            _primeConnectorCoordinates = primeConnectorCoordinates;
-            _layerCount = layerCount;
-            _sideLength = sideLength;
+            OriginalSlots = originalSlots;
+            PrimeConnectorCoordinates = primeConnectorCoordinates;
+            LayerCount = layerCount;
+            SideLength = sideLength;
         }
 
-        private ComponentSlot[,,] _originalSlots { get; }
-        private Coordinates _primeConnectorCoordinates { get; }
-        private int _layerCount { get; }
-        private int _sideLength { get; }
-        private HashSet<Cannon> Cannons { get; set; } = new();
+        private ComponentSlot[,,] OriginalSlots { get; }
+        private Coordinates PrimeConnectorCoordinates { get; }
+        private int LayerCount { get; }
+        private int SideLength { get; }
+        private ConcurrentBag<Cannon> Cannons { get; set; } = new();
         private int ValidCannons { get; set; } = 0;
         private int RejectedCannons { get; set; } = 0;
         private int TotalCannons { get; set; } = 0;
@@ -30,7 +30,7 @@ namespace CramTetrisCalcUI
         /// <returns>HashSet containing all valid cannon configurations within given parameters</returns>
         public Cannon[] GenerateCannons()
         {
-            GenerateCannonsRecursive(_originalSlots, 0, 0, 0);
+            GenerateCannonsRecursive(OriginalSlots, 0, 0, 0);
             return Cannons.ToArray();
         }
 
@@ -43,10 +43,11 @@ namespace CramTetrisCalcUI
         /// <param name="z">Current z-coordinate</param>
         private void GenerateCannonsRecursive(ComponentSlot[,,] currentSlotArray, int x, int y, int z)
         {
-            if (y == _layerCount)
+            if (y == LayerCount)
             {
                 // Finished recursively iterating through the entire array
-                Cannon cannonToTest = new(currentSlotArray, _primeConnectorCoordinates, _layerCount, _sideLength);
+                Cannon cannonToTest = new(currentSlotArray, PrimeConnectorCoordinates, LayerCount, SideLength);
+                // Add only valid cannons
                 if (cannonToTest.CheckConnections())
                 {
                     cannonToTest.CalculateConnectionsPerVolume();
@@ -67,19 +68,18 @@ namespace CramTetrisCalcUI
                     Console.WriteLine($"{validCannonStr} valid cannons of {totalCannonStr} tested; {rejectedStr} rejected");
                 }
             }
-            else if (x == _sideLength)
+            else if (x == SideLength)
             {
                 // Move to the next row in layer
                 GenerateCannonsRecursive(currentSlotArray, 0, y, z + 1);
             }
-            else if (z == _sideLength)
+            else if (z == SideLength)
             {
                 // Move to the next layer
                 GenerateCannonsRecursive(currentSlotArray, 0, y + 1, 0);
             }
             else
             {
-                // Iterate over all possible ComponentTypes
                 foreach (CramComponentType type in Enum.GetValues(typeof(CramComponentType)))
                 {
                     ComponentSlot slotToSet = currentSlotArray[y, z, x];
@@ -97,7 +97,6 @@ namespace CramTetrisCalcUI
                     // Iterate over all possible Packer orientations
                     else if (type == CramComponentType.Packer)
                     {
-                        slotToSet.ComponentType = type;
                         foreach (PackerOrientation orientation in PackerOrientation.AllOrientations)
                         {
                             slotToSet.Orientation = orientation;

@@ -64,11 +64,10 @@ namespace CramTetrisCalcUI
         }
 
         /// <summary>
-        /// Check that all connectors and packers are connected to Prime Connector
+        /// Check that all connectors are connected to Prime Connector
         /// </summary>
         public bool CheckConnections()
         {
-            bool allConnected = true;
             List<Coordinates> coordsToCheckList = new() { PrimeConnectorCoordinates };
 
             // Reset connection status
@@ -79,10 +78,10 @@ namespace CramTetrisCalcUI
             // Prime connector is always connected
             GetSlotAtCoordinates(PrimeConnectorCoordinates).IsConnected = true;
 
-            // Check whether all connectors are connected to Prime Connector through other connectors
+            // Recursively iterate through all connectors connectod to prime connector and set IsConnected
             while (coordsToCheckList.Count > 0)
             {
-                for (int coordToCheckIndex = 0; coordToCheckIndex < coordsToCheckList.Count(); coordToCheckIndex++)
+                for (int coordToCheckIndex = 0; coordToCheckIndex < coordsToCheckList.Count; coordToCheckIndex++)
                 {
                     ComponentSlot slot = GetSlotAtCoordinates(coordsToCheckList[coordToCheckIndex]);
                     foreach (Coordinates neighborCoord in slot.GetNeighboringCoordinates())
@@ -97,12 +96,19 @@ namespace CramTetrisCalcUI
                             coordsToCheckList.Add(neighborCoord);
                         }
                     }
-
-                    coordsToCheckList.RemoveAt(coordToCheckIndex);
+                    // Immediately return false if any are unconnected after checking
+                    if (!slot.IsConnected)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        coordsToCheckList.RemoveAt(coordToCheckIndex);
+                    }
                 }
             }
 
-            // Check that all packers are connected to connected connectors
+            // Check that all packers are connected to connectors
             foreach (ComponentSlot slotToCheck in ComponentArray)
             {
                 if (slotToCheck.ComponentType == CramComponentType.Packer)
@@ -119,29 +125,27 @@ namespace CramTetrisCalcUI
                             break;
                         }
                     }
+                    // If any are not connected, immediately return false
+                    if (!slotToCheck.IsConnected)
+                    {
+                        return false;
+                    }
                 }
             }
 
-            // Check all packers and connectors are conected to Prime Connector
-            // And all pellets have at least one packer connection
+            // Check all pellets have at least one packer connection
             CalculatePackerToPelletConnections();
             foreach (ComponentSlot slot in ComponentArray)
             {
-                if ((slot.ComponentType == CramComponentType.Connector
-                    || slot.ComponentType == CramComponentType.Packer)
-                    && !slot.IsConnected)
-                {
-                    allConnected = false;
-                    break;
-                }
-                else if (slot.ComponentType == CramComponentType.Pellet
+                if (slot.ComponentType == CramComponentType.Pellet
                     && slot.PackerConnectionCount == 0)
                 {
-                    allConnected = false;
-                    break;
+                    return false;
                 }
             }
-            return allConnected;
+
+            // Can only reach this code if nothing else failed
+            return true;
         }
 
         /// <summary>
